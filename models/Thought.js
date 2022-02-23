@@ -1,31 +1,5 @@
-const { Schema, model, Types } = require('mongoose');
+const { Schema, model } = require('mongoose');
 const moment = require('moment');
-
-const ReplySchema = new Schema (
-    {
-        // Set custom id to avoid confusion with parent comment_id
-        reactionId: {
-            type: Schema.Types.ObjectId,
-            default: () => new Types.ObjectId()
-        },
-        reactionBody: {
-            type: String,
-            required: true,
-            trim: true.valueOf,
-            minlength: 1,
-            maxlength: 280
-        },
-        username: {
-            type: String,
-            required: true,
-        },
-        createdAt: {
-            type: Date,
-            default: Date.now,
-            get: createdAtVal => moment(createdAtVal).format('MMM DD, YYYY [at] jj:mm a')
-        }
-    },
-);
 
 const ThoughtSchema = new Schema (
     {
@@ -42,19 +16,26 @@ const ThoughtSchema = new Schema (
         },
         username: {
             type: String,
-            required: true
+            required: true,
+            ref: 'User'
         },
-        reactions: [
-            {
-                type: Schema.Types.ObjectId,
-                ref: 'reactionSchema',
-            }
-        ],
+        reactions: [ReactionSchema],
+    },
+    {
+      toJSON: {
+        virtuals: true,
+        getters: true
+      },
+      id: false
     }
-)
+);
 
-// Get a total count of friends on retrieval
-// Virtual
+
+const Thought = model('Thought', ThoughtSchema);
+
+// get total count of friends on retrieval
 ThoughtSchema.virtual('reactionCount').get(function() {
-    return this.reactions.reduce((total, reaction) => total + reaction.count.length + 1,0);
+return this.reactions.length;
 });
+
+module.exports = Thought;
